@@ -1,5 +1,5 @@
 import struct
-import bmp_renderer as bmp
+from main import *
 
 class Texture(object):
     
@@ -27,7 +27,7 @@ class Texture(object):
                     r = ord(image.read(1))
                     
                     self.pixels[y].append(
-                        bmp.color_select(r, g, b)
+                        color(r, g, b)
                     )
                     
     def get_color(self, tx, ty):
@@ -44,8 +44,35 @@ class Texture(object):
         g = self.pixels[y][x][1] * intensity
         r = self.pixels[y][x][2] * intensity
         
-        return bmp.color_select(r, g, b)
+        return color(r, g, b)
                     
 
-t = Texture('./dogt.bmp')
-print(t.get_color_with_intensity(0, 0, 1))
+r = Render()
+r.glCreateWindow(800, 800)
+t = Texture('./obj.bmp')
+r.framebuffer = t.pixels
+
+cube = Obj("./silla.obj")
+
+r.current_color = color(255,255,255)
+
+for face in cube.faces:
+    if len(face) == 3:
+        f1 = face[0][1] - 1
+        f2 = face[1][1] - 1
+        f3 = face[2][1] - 1
+        
+        vt1 = V3(
+            cube.tvertex[f1][0] * t.width,
+            cube.tvertex[f1][1] * t.height,
+        )
+        vt2 = V3(
+            cube.tvertex[f2][0] * t.width,
+            cube.tvertex[f2][1] * t.height,
+        )
+        vt3 = V3(
+            cube.tvertex[f3][0] * t.width,
+            cube.tvertex[f3][1] * t.height,
+        )
+
+r.glFinish("t.bmp")

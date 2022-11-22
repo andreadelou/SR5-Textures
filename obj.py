@@ -5,6 +5,7 @@ class Obj(object):
             self.lines = f.read().splitlines()
             self.vertex = []
             self.faces = []
+            self.tvertex = []
             
             i = 1
             
@@ -18,6 +19,8 @@ class Obj(object):
                 i += 1
                 
                 if prefix == 'v':
+                    self.vertex.append(list(map(float, value.split(' '))))
+                if prefix == 'vt':
                     self.vertex.append(list(map(float, value.split(' '))))
                 elif prefix == 'f':
                     try:
