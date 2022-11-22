@@ -21,7 +21,7 @@ class Obj(object):
                 if prefix == 'v':
                     self.vertex.append(list(map(float, value.split(' '))))
                 if prefix == 'vt':
-                    self.vertex.append(list(map(float, value.split(' '))))
+                    self.tvertex.append(list(map(float, value.split(' '))))
                 elif prefix == 'f':
                     try:
                         self.faces.append([list(map(int , face.split('/'))) for face in value.split(' ')])

@@ -54,7 +54,7 @@ r.framebuffer = t.pixels
 
 cube = Obj("./silla.obj")
 
-r.current_color = color(255,255,255)
+r.current_color = color(25,25,112)
 
 for face in cube.faces:
     if len(face) == 3:

@@ -72,7 +72,7 @@ class Render(object):
         self.clearColor = color(0, 0, 0)
         self.texture = None
 
-        self.current_color = color(1, 1, 1)
+        self.current_color = color(255,255,255)
         self.framebuffer = []
        
         self.glViewport(0,0,self.width, self.height)
@@ -174,10 +174,10 @@ class Render(object):
             ft3 = face[2][1] - 1
             ft4 = face[3][1] - 1
 
-            vt1 = V3(*model.tvertices[ft1])
-            vt2 = V3(*model.tvertices[ft2])
-            vt3 = V3(*model.tvertices[ft3])
-            vt4 = V3(*model.tvertices[ft4])
+            vt1 = V3(*model.tvertex[ft1])
+            vt2 = V3(*model.tvertex[ft2])
+            vt3 = V3(*model.tvertex[ft3])
+            vt4 = V3(*model.tvertex[ft4])
 
             self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3))
             self.triangle_babycenter((v1, v3, v4), (vt1, vt3, vt4))
@@ -200,9 +200,9 @@ class Render(object):
             ft2 = face[1][1] - 1
             ft3 = face[2][1] - 1
 
-            vt1 = V3(*model.tvertices[ft1])
-            vt2 = V3(*model.tvertices[ft2])
-            vt3 = V3(*model.tvertices[ft3])
+            vt1 = V3(*model.tvertex[ft1])
+            vt2 = V3(*model.tvertex[ft2])
+            vt3 = V3(*model.tvertex[ft3])
 
             self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3))
           else:
@@ -288,15 +288,15 @@ class Render(object):
             # Color table
             for y in range(self.height):
                 for x in range(self.width):
-                    file.write(self.framebuffer[x][y])
+                    file.write(self.framebuffer[y][x])
             file.close()
       
 
   
 r = Render()
-r.glCreateWindow(800, 800)
+r.glCreateWindow(1000, 1000)
 # r.glViewport(int(0),int(0),int(800/1), int(800/1))
-r.lightPosition(0, 1, 1)
+r.lightPosition(0.3, 0.2, 1)
 #                          escala            posicion y , x
-r.glObjModel('silla.obj', (100, 100, 100), (400, 400, 0))
+r.glObjModel('silla.obj', (20, 20, 20), (400, 100, 0))
 r.glFinish("obj.bmp")
