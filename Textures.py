@@ -74,5 +74,9 @@ for face in cube.faces:
             cube.tvertex[f3][0] * t.width,
             cube.tvertex[f3][1] * t.height,
         )
-
+        
+        r.glLine(vt1,vt2)
+        r.glLine(vt2,vt3)
+        r.glLine(vt3,vt1)
+        
 r.glFinish("t.bmp")
