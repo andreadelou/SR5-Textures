@@ -303,8 +303,9 @@ r = Render()
 r.glCreateWindow(1000, 1000)
 # r.glViewport(int(0),int(0),int(800/1), int(800/1))
 r.lightPosition(0.3, 0.2, 1)
+textura = Texture('./model.bmp')
 
 #                          escala            posicion y , x
-r.glObjModel('face.obj', (10, 10, 10), (400, 200, 0), Texture('model.bmp'))
+r.glObjModel('face.obj', (10, 10, 10), (400, 200, 0), texture=textura)
 # r.glObjModel('arbol.obj', (20, 20, 20), (400, 100, 0))
 r.glFinish("obj.bmp")
