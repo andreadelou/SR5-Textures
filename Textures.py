@@ -1,5 +1,10 @@
 import struct
-from main import *
+
+def color(r, g, b):
+    r = int(min(255, max(r, 0)))
+    g = int(min(255, max(g, 0)))
+    b = int(min(255, max(b, 0)))
+    return bytes([b, g, r])
 
 class Texture(object):
     
@@ -37,46 +42,46 @@ class Texture(object):
         return self.pixels[y][x]
     
     def get_color_with_intensity(self, tx, ty, intensity):
-        x = round(tx * self.width)
-        y = round(ty * self.height)
-        
-        b = self.pixels[y][x][0] * intensity
-        g = self.pixels[y][x][1] * intensity
-        r = self.pixels[y][x][2] * intensity
-        
+        x = round(tx*(self.width-1))
+        y = round(ty*(self.height-1))
+
+        b = round(self.pixels[y][x][0]*intensity)
+        g = round(self.pixels[y][x][1]*intensity)
+        r = round(self.pixels[y][x][2]*intensity)
+
         return color(r, g, b)
                     
 
-r = Render()
-r.glCreateWindow(800, 800)
-t = Texture('./obj.bmp')
-r.framebuffer = t.pixels
+# r = Render()
+# r.glCreateWindow(800, 800)
+# t = Texture('./obj.bmp')
+# r.framebuffer = t.pixels
 
-cube = Obj("./silla.obj")
+# cube = Obj("./silla.obj")
 
-r.current_color = color(25,25,112)
+# r.current_color = color(25,25,112)
 
-for face in cube.faces:
-    if len(face) == 3:
-        f1 = face[0][1] - 1
-        f2 = face[1][1] - 1
-        f3 = face[2][1] - 1
+# for face in cube.faces:
+#     if len(face) == 3:
+#         f1 = face[0][1] - 1
+#         f2 = face[1][1] - 1
+#         f3 = face[2][1] - 1
         
-        vt1 = V3(
-            cube.tvertex[f1][0] * t.width,
-            cube.tvertex[f1][1] * t.height,
-        )
-        vt2 = V3(
-            cube.tvertex[f2][0] * t.width,
-            cube.tvertex[f2][1] * t.height,
-        )
-        vt3 = V3(
-            cube.tvertex[f3][0] * t.width,
-            cube.tvertex[f3][1] * t.height,
-        )
+#         vt1 = V3(
+#             cube.tvertex[f1][0] * t.width,
+#             cube.tvertex[f1][1] * t.height,
+#         )
+#         vt2 = V3(
+#             cube.tvertex[f2][0] * t.width,
+#             cube.tvertex[f2][1] * t.height,
+#         )
+#         vt3 = V3(
+#             cube.tvertex[f3][0] * t.width,
+#             cube.tvertex[f3][1] * t.height,
+#         )
         
-        r.glLine(vt1,vt2)
-        r.glLine(vt2,vt3)
-        r.glLine(vt3,vt1)
+#         r.glLine(vt1,vt2)
+#         r.glLine(vt2,vt3)
+#         r.glLine(vt3,vt1)
         
-r.glFinish("t.bmp")
+# r.glFinish("t.bmp")
