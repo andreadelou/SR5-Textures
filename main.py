@@ -108,65 +108,67 @@ class Render(object):
 
     def glPoint(self, x, y, colort = None):
         if (0 <= x < self.width) and (0 <= y < self.height):
-          self.framebuffer[x][y] = colort 
-          # or self.current_color
+          self.framebuffer[x][y] = colort  or self.current_color
             
     def glObjModel(self, filename, scale_factor, translate_factor, texture=None):
       model = Obj(filename)
 
       for face in model.faces:
-          vcount = len(face)
+        vcount = len(face)
+        
+        if vcount == 4:
           
-          if vcount == 4:
-              f1 = face[0][0] - 1
-              f2 = face[1][0] - 1
-              f3 = face[2][0] - 1
-              f4 = face[3][0] - 1
+          f1 = face[0][0] - 1
+          f2 = face[1][0] - 1
+          f3 = face[2][0] - 1
+          f4 = face[3][0] - 1
 
-              v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
-              v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
-              v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
-              v4 = self.transform_vertex(model.vertex[f4], translate_factor, scale_factor)
+          v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
+          v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
+          v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
+          v4 = self.transform_vertex(model.vertex[f4], translate_factor, scale_factor)
 
-              if not texture:
-                  self.triangle_babycenter(v1, v2, v3,colort = color(255,255,255))
-                  self.triangle_babycenter(v1, v3, v4,colort = color(255,255,255))
-              else:
-                  t1 = face[0][1] - 1
-                  t2 = face[1][1] - 1
-                  t3 = face[2][1] - 1
-                  t4 = face[3][1] - 1
+          if not texture:
+            self.triangle_babycenter(v1, v2, v3,colort = color(255,255,255))
+            self.triangle_babycenter(v1, v3, v4,colort = color(255,255,255))
+          else:
+            t1 = face[0][1] - 1
+            t2 = face[1][1] - 1
+            t3 = face[2][1] - 1
+            t4 = face[3][1] - 1
 
-                  tA = V3(*model.tvertex[t1])
-                  tB = V3(*model.tvertex[t2])
-                  tC = V3(*model.tvertex[t3])
-                  tD = V3(*model.tvertex[t4])
+            tA = V3(*model.tvertex[t1])
+            tB = V3(*model.tvertex[t2])
+            tC = V3(*model.tvertex[t3])
+            tD = V3(*model.tvertex[t4])
 
-                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
-                  self.triangle_babycenter(v1, v3, v4, (tA, tC, tD), texture=texture)
+            self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
+            self.triangle_babycenter(v1, v3, v4, (tA, tC, tD), texture=texture)
 
-          
-          elif vcount == 3:
-              f1 = face[0][0] - 1
-              f2 = face[1][0] - 1
-              f3 = face[2][0] - 1
+        
+        elif vcount == 3:
+          f1 = face[0][0] - 1
+          f2 = face[1][0] - 1
+          f3 = face[2][0] - 1
 
-              v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
-              v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
-              v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
+          v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
+          v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
+          v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
 
-              if not texture:
-                  self.triangle_babycenter(v1, v2, v3, colort = color(255,255,255))
-              else:
-                  t1 = face[0][1] - 1
-                  t2 = face[1][1] - 1
-                  t3 = face[2][1] - 1
+          if not texture:
+            self.triangle_babycenter(v1, v2, v3, colort = color(255,255,255))
+          else:
+            t1 = face[0][1] - 1
+            t2 = face[1][1] - 1
+            t3 = face[2][1] - 1
 
-                  tA = V3(*model.tvertex[t1])
-                  tB = V3(*model.tvertex[t2])
-                  tC = V3(*model.tvertex[t3])
+            tA = V3(*model.tvertex[t1])
+            tB = V3(*model.tvertex[t2])
+            tC = V3(*model.tvertex[t3])
 
-                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
+            self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
+      
+     
 
             
     
