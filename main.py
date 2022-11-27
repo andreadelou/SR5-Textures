@@ -260,12 +260,12 @@ class Render(object):
 
   
 r = Render()
-r.glCreateWindow(1024, 1024)
+r.glCreateWindow(500, 500)
 # r.glViewport(int(0),int(0),int(800/1), int(800/1))
 r.lightPosition(0, 0, 1)
 textura = Texture('./earth.bmp')
 print("textura")
 #                          escala            posicion y , x
-r.glObjModel('./earth.obj', translate_factor=[512, 512, 0], scale_factor=[0.1, 0.1, 0.1], texture=textura)
+r.glObjModel('./earth.obj', translate_factor=[512, 512, 0], scale_factor=[0.001, 0.001, 0.001], texture=textura)
 print("objeto")
 r.glFinish("obj.bmp")
