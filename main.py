@@ -8,12 +8,52 @@ from lib import *
 BLACK = color(0, 0, 0)
 WHITE = color(255, 255, 255)
 
+def bounding_box(A, B, C):
+
+  coords = [(A.x, A.y), (B.x, B.y), (C.x, C.y)]
+
+  x_min = 999999
+  x_max = -999999
+  y_min = 999999
+  y_max = -999999
+
+  for(x, y) in coords:
+
+      if x < x_min:
+          x_min = x
+      if x > x_max:
+          x_max = x
+      if y < y_min:
+          y_min = y
+      if y > y_max:
+          y_max = y
+
+  return V3(x_min, y_min), V3(x_max, y_max)
+
+def barycentric(A, B, C, P):
+
+  cx, cy, cz = cross(
+      V3(B.x - A.x, C.x - A.x, A.x - P.x),
+      V3(B.y - A.y, C.y - A.y, A.y - P.y)
+  )
+
+  if cz == 0:
+      return(-1, -1, -1)
+
+  u = cx / cz
+  v = cy / cz
+  w = 1 - (u + v)
+
+  return(w, v, u)
+
+
 class Render(object):
   def __init__(self, width, height):
     self.width = width
     self.height = height
     self.current_color = WHITE
     self.clear()
+    self.texture = None
 
   def clear(self):
     self.framebuffer = [
@@ -72,107 +112,50 @@ class Render(object):
     self.current_color = color
 
   def point(self, x, y, color = None):
-    try:
-      self.framebuffer[y][x] = color or self.current_color
-    except:
-      pass
+     if (0 <= x < self.width) and (0 <= y < self.height):
+        self.framebuffer[x][y] = color or self.current_color
   
   
-  def shader(self, A,B,C,x,y):
-    centro_x, centro_y = 330,260 #centro del planeta
-    radio = 2 + random.randint(0,20) 
-  
-    #el lunar de Jupiter
-    if(x-centro_x)**2 +(y-centro_y)**2 < radio**2:
-      return color(244, 98, 3)
-    
-    
-    #Esto se basa en el tama;o que quiero que tengan las lineas de color
-    #El y determina que tanto espacio del planeta ocuparan con las debidas coordenadas de alto
-    #Mientras que el random es el tama;o de dispersion de las "particulas" para hacerlo ver "gaseoso"
-    
-    
-    #arriba
-    if(y>=375 + random.randint(0,50)):
-      return color(171, 155, 57)
-    #linea 2
-    if(y>=360 + random.randint(0,20) and y<375 + random.randint(0,20)):
-      return color(252, 246, 243)
-    #Linea 2
-    if(y>=355 + random.randint(0,30) and y<360 + random.randint(0,20)):
-      return color(235, 175, 122)
-    #Linea 3
-    if(y>=340 + random.randint(0,20) and y<355 + random.randint(0,20)):
-      return color(249, 217, 189)
-    #Linea 3
-    if(y>=320 + random.randint(0,20) and y<340 + random.randint(0,20)):
-      return color(235, 175, 122)
-    #Linea 4
-    if(y>=295 + random.randint(0,50) and y<320 + random.randint(0,50)):
-      return color(121, 21, 21)
-    #Linea 4
-    if(y>=285 + random.randint(0,10) and y<320 + random.randint(0,20)):
-      return color(192, 138, 113)
-    #Linea "amarilla"
-    if(y>=280 + random.randint(0,10) and y<285 + random.randint(0,20)):
-      return color(244, 198, 98) 
-    #Linea arriba del lunar (no lo toca)
-    if(y>=250 + random.randint(0,20) and y<280 + random.randint(0,20)):
-      return color(223, 211, 205)
-    
-    #Lineas del lunar 
-    #Linea que va en la parte superior del lunar 
-    if(y>=250 + random.randint(0,50) and y<260 + random.randint(0,50) and x < centro_x ):
-      return color(192, 138, 113)
-    if(y>=250 + random.randint(0,10) and y<260 + random.randint(0,8) and x > centro_x ):
-      return color(192, 138, 113)
-    #Linea que va en la parte superior del lunar 
-    if(y>=250 + random.randint(0,10) and y<260 + random.randint(0,8) and x > centro_x ):
-      return color(207, 94, 41)
-    #Linea que va en la parte superior del lunar 
-    if(y>=240 + random.randint(0,10) and y<250 + random.randint(0,8)and x > centro_x):
-      return color(121, 21, 21)
-    if(y>=240 + random.randint(0,50) and y<250 + random.randint(0,50)and x < centro_x):
-      return color(121, 21, 21)
-    #Linea que va en la parte inferior del lunar 
-    if(y>=230 + random.randint(0,10) and y<250 + random.randint(0,20)):
-      return color(253, 244, 239)
-    
-    #Fuera lunar 
-    
-    #Tercera linea abajo para arriba
-    if(y>=200 + random.randint(0,20) and y<220 + random.randint(0,20)):
-      return color(245, 237, 222)
-    #Segunda linea de abajo para arriba
-    if(y>=180 + random.randint(0,20) and y<230 + random.randint(0,20)):
-       return color(229, 212, 184)
-    #Color de abajo
-    if(y>0 + random.randint(0,20) and y<200 + random.randint(0,20)):
-      return color(171, 155, 57)
-      
-    #color base 
-    if(y>=0 + random.randint(0,5) and y<=375 + random.randint(0,5)):
-      return color(234, 190, 122)
+  def triangle(self, A, B, C, cord_tex = None, texture = None, color = None, intensity = 1):
 
-  def triangle(self, A, B, C, color=None):
-    bbox_min, bbox_max = bbox(A, B, C)
+    light = V3(0, 0, 1)
+    normal = (B - A) * (C - A)
 
-    for x in range(bbox_min.x, bbox_max.x + 1):
-      for y in range(bbox_min.y, bbox_max.y + 1):
-        w, v, u = barycentric(A, B, C, V2(x, y))
-        if w < 0 or v < 0 or u < 0: 
-          continue
-        
-        color = self.shader(A,B,C,x,y)
+    i = normal.norm() @ light.norm()
 
-        z = A.z * w + B.z * v + C.z * u
+    if i < 0:
+        i = abs(i)
+    if i > 1:
+        i = 1
 
-        if x < 0 or y < 0:
-          continue
+    color_tex = 1 * i
 
-        if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
-          self.point(x, y, color)
-          self.zbuffer[x][y] = z
+    self.render_color = color(color_tex, color_tex, color_tex)
+
+    min, max = bounding_box(A, B, C)
+    min.round_coords()
+    max.round_coords()
+
+    for x in range(min.x, max.x + 1):
+        for y in range(min.y, max.y + 1):
+            w, v, u = barycentric(A, B, C, V3(x, y))
+
+            if(w < 0 or v < 0 or u < 0):
+                continue
+            
+            if texture:
+                tA, tB, tC = cord_tex
+                tx = tA.x * w + tB.x * u + tC.x * v
+                ty = tA.y * w + tB.y * u + tC.y * v
+
+                color = texture.get_color_with_intensity(tx, ty, intensity)
+
+            z = A.z * w + B.z * v + C.z * u
+
+            if(x < len(self.zBuffer) and y < len(self.zBuffer) and z > self.zBuffer[x][y]):
+                self.zBuffer[x][y] = z
+                self.glPoint(x, y, color)
+
 
   def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
     return V3(
@@ -181,54 +164,62 @@ class Render(object):
       round((vertex[2] + translate[2]) * scale[2])
     )
     
-  def load(self, filename, translate=(0, 0, 0), scale=(1, 1, 1)):
+  def load(self, filename, translate, scale, texture = None):
     model = Obj(filename)
-    light = V3(0,0,1)
 
-    for face in model.vfaces:
+    for face in model.faces:
         vcount = len(face)
+        
+        if vcount == 4:
+            f1 = face[0][0] - 1
+            f2 = face[1][0] - 1
+            f3 = face[2][0] - 1
+            f4 = face[3][0] - 1
 
-        if vcount == 3:
-          f1 = face[0][0] - 1
-          f2 = face[1][0] - 1
-          f3 = face[2][0] - 1
+            v1 = self.transform_vertex(model.vertices[f1], translate, scale)
+            v2 = self.transform_vertex(model.vertices[f2], translate, scale)
+            v3 = self.transform_vertex(model.vertices[f3], translate, scale)
+            v4 = self.transform_vertex(model.vertices[f4], translate, scale)
 
-          a = self.transform(model.vertices[f1], translate, scale)
-          b = self.transform(model.vertices[f2], translate, scale)
-          c = self.transform(model.vertices[f3], translate, scale)
+            if not texture:
+                self.triangle(v1, v2, v3)
+                self.triangle(v1, v3, v4)
+            else:
+                t1 = face[0][1] - 1
+                t2 = face[1][1] - 1
+                t3 = face[2][1] - 1
+                t4 = face[3][1] - 1
 
-          normal = norm(cross(sub(b, a), sub(c, a)))
-          intensity = dot(normal, light)
+                tA = V3(*model.tvertices[t1])
+                tB = V3(*model.tvertices[t2])
+                tC = V3(*model.tvertices[t3])
+                tD = V3(*model.tvertices[t4])
 
-          grey = round(255 * intensity)
-          if grey < 0:
-            continue
-          self.triangle(a, b, c, color=color(grey, grey, grey))
-          
-        else:
-          f1 = face[0][0] - 1
-          f2 = face[1][0] - 1
-          f3 = face[2][0] - 1
-          f4 = face[3][0] - 1   
+                self.triangle(v1, v2, v3, (tA, tB, tC), texture)
+                self.triangle(v1, v3, v4, (tA, tC, tD), texture)
 
-          vertices = [
-            self.transform(model.vertices[f1], translate, scale),
-            self.transform(model.vertices[f2], translate, scale),
-            self.transform(model.vertices[f3], translate, scale),
-            self.transform(model.vertices[f4], translate, scale)
-          ]
+        
+        elif vcount == 3:
+            f1 = face[0][0] - 1
+            f2 = face[1][0] - 1
+            f3 = face[2][0] - 1
 
-          normal = norm(cross(sub(vertices[0], vertices[1]), sub(vertices[1], vertices[2])))  
-          intensity = dot(normal, light)
-          grey = round(255 * intensity)
+            v1 = self.transform_vertex(model.vertices[f1], translate, scale)
+            v2 = self.transform_vertex(model.vertices[f2], translate, scale)
+            v3 = self.transform_vertex(model.vertices[f3], translate, scale)
 
-          A, B, C, D = vertices 
+            if not texture:
+                self.triangle(v1, v2, v3)
+            else:
+                t1 = face[0][1] - 1
+                t2 = face[1][1] - 1
+                t3 = face[2][1] - 1
 
-          grey = round(255 * intensity)
-          if grey < 0:
-            continue
-          self.triangle(A, B, C, color(grey, grey, grey))
-          self.triangle(A, C, D, color(grey, grey, grey))            
+                tA = V3(*model.tvertices[t1])
+                tB = V3(*model.tvertices[t2])
+                tC = V3(*model.tvertices[t3])
+
+                self.triangle(v1, v2, v3, (tA, tB, tC), texture)
             
 
 r = Render(500, 500)

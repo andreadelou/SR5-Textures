@@ -62,3 +62,16 @@ class Texture(object):
             return bytes(map(lambda b: round(b*intensity) if b*intensity > 0 else 0, self.pixels[y][x]))
         except:
             pass  
+    
+    def get_color_with_intensity(self, tx, ty, intensity):
+        x = round(tx * self.width)
+        y = round(ty * self.height)
+
+        try:
+            return bytes(map(lambda b: round(b*intensity) 
+                if b*intensity > 0 
+                else 0, 
+                self.pixels[y][x])
+            )
+        except:
+            pass
