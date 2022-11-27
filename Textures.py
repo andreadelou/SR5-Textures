@@ -45,11 +45,14 @@ class Texture(object):
         x = round(tx*(self.width-1))
         y = round(ty*(self.height-1))
 
-        b = round(self.pixels[y][x][0]*intensity)
-        g = round(self.pixels[y][x][1]*intensity)
-        r = round(self.pixels[y][x][2]*intensity)
-
-        return color(r, g, b)
+        try:
+            return bytes(map(lambda b: round(b*intensity) 
+                if b*intensity > 0 
+                else 0, 
+                self.pixels[y][x])
+            )
+        except:
+            pass
                     
 
 # r = Render()

@@ -106,51 +106,51 @@ class Render(object):
     def glColor(self, r, g, b):
         self.current_color = color(r, g, b)
 
-    def glPoint(self, x, y):
-      if(0 < x < self.width and 0 < y < self.height):
-          self.framebuffer[y][x] = self.clearColor
+    def glPoint(self, x, y, colort = None):
+        if (0 <= x < self.width) and (0 <= y < self.height):
+          self.framebuffer[x][y] = colort or self.current_color
 
-    def glLine(self, v1, v2):
+    # def glLine(self, v1, v2):
         
-        x0 = int((v1.x + 1) * self.viewpwidth * 1/2 ) + self.viewpx
-        y0 = int((v1.y + 1) * self.viewpheight * 1/2) + self.viewpy
+    #     x0 = int((v1.x + 1) * self.viewpwidth * 1/2 ) + self.viewpx
+    #     y0 = int((v1.y + 1) * self.viewpheight * 1/2) + self.viewpy
 
-        x1 = int((v2.x + 1) * self.viewpwidth * 1/2 ) + self.viewpx
-        y1 = int((v2.y + 1) * self.viewpheight * 1/2) + self.viewpy
+    #     x1 = int((v2.x + 1) * self.viewpwidth * 1/2 ) + self.viewpx
+    #     y1 = int((v2.y + 1) * self.viewpheight * 1/2) + self.viewpy
 
-        #realizar conversion
-        dy = abs(y1 - y0)
-        dx = abs(x1 - x0)
+    #     #realizar conversion
+    #     dy = abs(y1 - y0)
+    #     dx = abs(x1 - x0)
 
-        steep = dy > dx
+    #     steep = dy > dx
 
-        if steep:
-            x0, y0 = y0, x0
-            x1, y1 = y1, x1
+    #     if steep:
+    #         x0, y0 = y0, x0
+    #         x1, y1 = y1, x1
 
-        if  x0 > x1:
-            x0, x1 = x1, x0
-            y0, y1 = y1, y0
+    #     if  x0 > x1:
+    #         x0, x1 = x1, x0
+    #         y0, y1 = y1, y0
 
-        dy = abs(y1 - y0)
-        dx = abs(x1 - x0)
+    #     dy = abs(y1 - y0)
+    #     dx = abs(x1 - x0)
 
-        offset = 0
+    #     offset = 0
         
-        threshold = dx
+    #     threshold = dx
         
-        y = y0
+    #     y = y0
 
-        for x in range(x0, x1 + 1):
-            if steep:
-                self.glPoint(y, x)
-            else:
-                self.glPoint(x, y)
+    #     for x in range(x0, x1 + 1):
+    #         if steep:
+    #             self.glPoint(y, x)
+    #         else:
+    #             self.glPoint(x, y)
 
-            offset += dy * 2
-            if offset >= threshold:
-                y += 1 if y0 < y1 else -1
-                threshold += dx * 2
+    #         offset += dy * 2
+    #         if offset >= threshold:
+    #             y += 1 if y0 < y1 else -1
+    #             threshold += dx * 2
             
     def glObjModel(self, filename, scale_factor, translate_factor, texture=None):
       model = Obj(filename)
@@ -169,8 +169,8 @@ class Render(object):
           v4 = self.transform_vertex(model.vertex[f4], scale_factor, translate_factor)
           
           if not texture:
-            self.triangle_babycenter(v1,v2,v3)
-            self.triangle_babycenter(v1,v2,v3)
+            self.triangle_babycenter(v1,v2,v3, colort=color(0,0,0))
+            self.triangle_babycenter(v1,v2,v3, colort=color(0,0,0))
           
           else:
 
@@ -184,8 +184,8 @@ class Render(object):
             vt3 = V3(*model.tvertex[ft3],0)
             vt4 = V3(*model.tvertex[ft4],0)
 
-            self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3), texture)
-            self.triangle_babycenter((v1, v3, v4), (vt1, vt3, vt4), texture)
+            self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3), texture=texture)
+            self.triangle_babycenter((v1, v3, v4), (vt1, vt3, vt4), texture=texture)
           
         
         if len(face) == 3:
@@ -198,7 +198,7 @@ class Render(object):
           v3 = self.transform_vertex(model.vertex[f3], scale_factor, translate_factor)
 
           if not texture:
-            self.triangle_babycenter(v1,v2,v3)
+            self.triangle_babycenter(v1,v2,v3, colort=color(0,0,0))
             
           else:
 
@@ -210,7 +210,7 @@ class Render(object):
             vt2 = V3(*model.tvertex[ft2])
             vt3 = V3(*model.tvertex[ft3])
 
-            self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3), texture)
+            self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3), texture=texture)
             
     
     def transform_vertex(self, vertex, scale_factor, translate_factor):
@@ -222,7 +222,8 @@ class Render(object):
         
     # SR4               
     
-    def triangle_babycenter(self, vertices, tvertices=(), texture=None, intensity=1):
+    def triangle_babycenter(self, vertices, tvertices=(), texture=None, intensity=1, colort=None):
+        
         A, B, C = vertices
         min,max = bounding_box(A, B, C)
         min.round_coords()
@@ -234,6 +235,7 @@ class Render(object):
         Light = self.light
         Normal = (B - A) * (C - A)
         i = Normal.norm() @ Light.norm()
+        
         if i < 0:
           i=abs(i)
         if i > 1:
@@ -254,7 +256,7 @@ class Render(object):
                   tx = tA.x * w + tB.x * u + tC.x * v
                   ty = tA.y * w + tB.y * u + tC.y * v
                   
-                  self.current_color= self.texture.get_color_with_intensity(tx, ty, i)
+                  colort = self.texture.get_color_with_intensity(tx, ty, i)
                   
                   z = A.z * w + B.z * v + C.z * u
                   
@@ -262,7 +264,7 @@ class Render(object):
                     continue
                   if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
                     self.zbuffer[x][y] = z 
-                    self.point(x, y)
+                    self.glPoint(x, y, colort)
                     
     def lightPosition(self, x:int, y:int, z:int):
       self.light = V3(x, y, z)
