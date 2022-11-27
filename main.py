@@ -1,271 +1,237 @@
 import struct
-from obj import Obj
-from Vector import *
-from textures import *
+import random
+import numpy
+from obj import Obj, Texture
+from collections import namedtuple
+from lib import *
 
-def char(c):
-    # 1 byte
-  return struct.pack('=c', c.encode('ascii'))
+BLACK = color(0, 0, 0)
+WHITE = color(255, 255, 255)
 
-
-def word(w):
-    # 2 bytes
-    return struct.pack('=h', w)
-
-def dword(d):
-    # 4 bytes
-    return struct.pack('=l',d)
-
-
-def color(r, g, b):
-    r = int(min(255, max(r, 0)))
-    g = int(min(255, max(g, 0)))
-    b = int(min(255, max(b, 0)))
-    return bytes([b, g, r])
-
-def cross(v1, v2):
-      return (
-        v1.y * v2.z - v1.z * v2.y,
-        v1.z * v2.x - v1.x * v2.z,
-        v1.x * v2.y - v1.y * v2.x
-      )
-    
-def bounding_box(A, B, C):
-    coords = [(A.x, A.y),(B.x, B.y),(C.x, C.y)]
-
-    xmin = 999999
-    xmax = -999999
-    ymin = 999999
-    ymax = -999999
-
-    for (x, y) in coords:
-        if x < xmin:
-            xmin = x
-        if x > xmax:
-            xmax = x
-        if y < ymin:
-            ymin = y
-        if y > ymax:
-            ymax = y
-    return V3(xmin, ymin), V3(xmax, ymax)
-
-def barycentric(A, B, C, P):
-      cx, cy, cz = cross(
-        V3(B.x - A.x, C.x - A.x, A.x - P.x),
-        V3(B.y - A.y, C.y - A.y, A.y - P.y)
-      )
-      if cz == 0:
-        return(-1, -1, -1)
-      u = cx / cz
-      v = cy / cz
-      w = 1 - (u + v) 
-
-      return (w, v, u)
-    
 class Render(object):
-    # Constructor
-    def __init__(self):
-        self.pixels = 0
-        self.viewPortX = 0
-        self.viewPortY = 0
-        self.height = 0
-        self.width = 0
-        self.clearColor = color(0, 0, 0)
-        self.texture = None
+  def __init__(self, width, height):
+    self.width = width
+    self.height = height
+    self.current_color = WHITE
+    self.clear()
 
-        self.current_color = color(255,255,255)
-        self.framebuffer = []
-       
-        self.glViewport(0,0,self.width, self.height)
-        self.glClear() 
-
-    def glCreateWindow(self, width, height):
-        self.width = width
-        self.height = height
-        self.glClear()
-        
-        self.zBuffer = [
+  def clear(self):
+    self.framebuffer = [
+      [BLACK for x in range(self.width)] 
+      for y in range(self.height)
+    ]
+    self.zbuffer = [
           [-9999 for x in range(self.width)]
           for y in range(self.height)
         ]
 
-    def glViewport(self, x, y, width, height):
-        self.viewpx = x
-        self.viewpy = y
-        self.viewpwidth = width
-        self.viewpheight = height
-    
-    def glClear(self):
-        self.framebuffer = [[self.clearColor for x in range(self.width+1)]
-                            for y in range(self.height+1)]
+  def write(self, filename):
+    f = open(filename, 'bw')
 
-    def glClearColor(self, r, g, b):
-        self.clearColor = color(r, b, g)
-        self.glClear()
+    f.write(char('B'))
+    f.write(char('M'))
+    f.write(dword(14 + 40 + self.width * self.height * 3))
+    f.write(dword(0))
+    f.write(dword(14 + 40))
 
-    def glColor(self, r, g, b):
-        self.current_color = color(r, g, b)
+    # Image header (40 bytes)
+    f.write(dword(40))
+    f.write(dword(self.width))
+    f.write(dword(self.height))
+    f.write(word(1))
+    f.write(word(24))
+    f.write(dword(0))
+    f.write(dword(self.width * self.height * 3))
+    f.write(dword(0))
+    f.write(dword(0))
+    f.write(dword(0))
+    f.write(dword(0))
 
-    def glPoint(self, x, y, colort = None):
-        if (0 <= x < self.width) and (0 <= y < self.height):
-          self.framebuffer[x][y] = colort  or self.current_color
-            
-    def glObjModel(self, filename, scale_factor, translate_factor, texture=None):
-      model = Obj(filename)
+   
+    for x in range(self.height):
+      for y in range(self.width):
+        f.write(self.framebuffer[x][y])
 
-      for face in model.faces:
-        vcount = len(face)
-        
-        if vcount == 4:
-          
-          f1 = face[0][0] - 1
-          f2 = face[1][0] - 1
-          f3 = face[2][0] - 1
-          f4 = face[3][0] - 1
+    f.close()
 
-          v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
-          v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
-          v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
-          v4 = self.transform_vertex(model.vertex[f4], translate_factor, scale_factor)
+  def display(self, filename='out.bmp'):
+      #Esto es para que el bpm pueda ser previamente visto como una imagen y no se tenga que descarfar el bmp
+      #para poderlo visualizar 
+    self.write(filename)
 
-          if not texture:
-            self.triangle_babycenter(v1, v2, v3,colort = color(255,255,255))
-            self.triangle_babycenter(v1, v3, v4,colort = color(255,255,255))
-          else:
-            t1 = face[0][1] - 1
-            t2 = face[1][1] - 1
-            t3 = face[2][1] - 1
-            t4 = face[3][1] - 1
+    try:
+      from wand.image import Image
+      from wand.display import display
 
-            tA = V3(*model.tvertex[t1])
-            tB = V3(*model.tvertex[t2])
-            tC = V3(*model.tvertex[t3])
-            tD = V3(*model.tvertex[t4])
+      with Image(filename=filename) as image:
+        display(image)
+    except ImportError:
+      pass 
 
-            self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
-            self.triangle_babycenter(v1, v3, v4, (tA, tC, tD), texture=texture)
+  def set_color(self, color):
+    self.current_color = color
 
-        
-        elif vcount == 3:
-          f1 = face[0][0] - 1
-          f2 = face[1][0] - 1
-          f3 = face[2][0] - 1
-
-          v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
-          v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
-          v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
-
-          if not texture:
-            self.triangle_babycenter(v1, v2, v3, colort = color(255,255,255))
-          else:
-            t1 = face[0][1] - 1
-            t2 = face[1][1] - 1
-            t3 = face[2][1] - 1
-
-            tA = V3(*model.tvertex[t1])
-            tB = V3(*model.tvertex[t2])
-            tC = V3(*model.tvertex[t3])
-
-            self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
-      
-     
-
-            
-    
-    def transform_vertex(self, vertex, scale_factor, translate_factor):
-      return V3(
-        (vertex[0] * scale_factor[0]) + translate_factor[0], 
-        (vertex[1] * scale_factor[1]) + translate_factor[1],
-        (vertex[2] * scale_factor[2]) + translate_factor[2]
-      )  
-        
-    # SR4               
-    
-    def triangle_babycenter(self, A, B, C, tvertex=(), texture=None, intensity=1, colort=None):
-    
-        min,max = bounding_box(A, B, C)
-        min.round_coords()
-        max.round_coords()
-        
-        # if self.texture:
-        #     tA, tB, tC = tvertex
-        
-        Light = self.light
-        Normal = (B - A) * (C - A)
-        i = Normal.norm() @ Light.norm()
-        
-        if i < 0:
-          i=abs(i)
-        if i > 1:
-          i = 1
-          
-        color_textura = 1*i
-        
-        self.current_color = color(color_textura,color_textura,color_textura)
-        
-        for x in range(min.x, max.x + 1):
-            for y in range(min.y, max.y + 1):
-                w, v, u = barycentric(A, B, C, V3(x, y))
-
-                if (w < 0 or v < 0 or u < 0):
-                    continue
-                if texture: 
-                  tA, tB, tC = tvertex
-                  tx = tA.x * w + tB.x * u + tC.x * v
-                  ty = tA.y * w + tB.y * u + tC.y * v
-                  
-                  colort = texture.get_color_with_intensity(tx, ty, i)
-                  
-                  z = A.z * w + B.z * v + C.z * u
-                  
-                  if (x<0) or (y<0):
-                    continue
-                  if x < len(self.zBuffer) and y < len(self.zBuffer[x]) and z > self.zBuffer[x][y]:
-                    self.zBuffer[x][y] = z 
-                    self.glPoint(x, y, colort)
-                    
-    def lightPosition(self, x:int, y:int, z:int):
-      self.light = V3(x, y, z)
-                  
-    def glFinish(self, filename):
-        with open(filename, 'bw') as file:
-            # Header
-            file.write(bytes('B'.encode('ascii')))
-            file.write(bytes('M'.encode('ascii')))
-
-            # file size
-            file.write(dword(14 + 40 + self.height * self.width * 3))
-            file.write(dword(0))
-            file.write(dword(14 + 40))
-
-            # Info Header
-            file.write(dword(40))
-            file.write(dword(self.width))
-            file.write(dword(self.height))
-            file.write(word(1))
-            file.write(word(24))
-            file.write(dword(0))
-            file.write(dword(self.width * self.height * 3))
-            file.write(dword(0))
-            file.write(dword(0))
-            file.write(dword(0))
-            file.write(dword(0))
-
-            # Color table
-            for y in range(self.height):
-                for x in range(self.width):
-                    file.write(self.framebuffer[y][x])
-            file.close()
-      
-
+  def point(self, x, y, color = None):
+    try:
+      self.framebuffer[y][x] = color or self.current_color
+    except:
+      pass
   
-r = Render()
-r.glCreateWindow(500, 500)
-# r.glViewport(int(0),int(0),int(800/1), int(800/1))
-r.lightPosition(0, 0, 1)
-textura = Texture('./earth.bmp')
-print("textura")
-#                          escala            posicion y , x
-r.glObjModel('./earth.obj', translate_factor=[512, 512, 0], scale_factor=[0.001, 0.001, 0.001], texture=textura)
-print("objeto")
-r.glFinish("obj.bmp")
+  
+  def shader(self, A,B,C,x,y):
+    centro_x, centro_y = 330,260 #centro del planeta
+    radio = 2 + random.randint(0,20) 
+  
+    #el lunar de Jupiter
+    if(x-centro_x)**2 +(y-centro_y)**2 < radio**2:
+      return color(244, 98, 3)
+    
+    
+    #Esto se basa en el tama;o que quiero que tengan las lineas de color
+    #El y determina que tanto espacio del planeta ocuparan con las debidas coordenadas de alto
+    #Mientras que el random es el tama;o de dispersion de las "particulas" para hacerlo ver "gaseoso"
+    
+    
+    #arriba
+    if(y>=375 + random.randint(0,50)):
+      return color(171, 155, 57)
+    #linea 2
+    if(y>=360 + random.randint(0,20) and y<375 + random.randint(0,20)):
+      return color(252, 246, 243)
+    #Linea 2
+    if(y>=355 + random.randint(0,30) and y<360 + random.randint(0,20)):
+      return color(235, 175, 122)
+    #Linea 3
+    if(y>=340 + random.randint(0,20) and y<355 + random.randint(0,20)):
+      return color(249, 217, 189)
+    #Linea 3
+    if(y>=320 + random.randint(0,20) and y<340 + random.randint(0,20)):
+      return color(235, 175, 122)
+    #Linea 4
+    if(y>=295 + random.randint(0,50) and y<320 + random.randint(0,50)):
+      return color(121, 21, 21)
+    #Linea 4
+    if(y>=285 + random.randint(0,10) and y<320 + random.randint(0,20)):
+      return color(192, 138, 113)
+    #Linea "amarilla"
+    if(y>=280 + random.randint(0,10) and y<285 + random.randint(0,20)):
+      return color(244, 198, 98) 
+    #Linea arriba del lunar (no lo toca)
+    if(y>=250 + random.randint(0,20) and y<280 + random.randint(0,20)):
+      return color(223, 211, 205)
+    
+    #Lineas del lunar 
+    #Linea que va en la parte superior del lunar 
+    if(y>=250 + random.randint(0,50) and y<260 + random.randint(0,50) and x < centro_x ):
+      return color(192, 138, 113)
+    if(y>=250 + random.randint(0,10) and y<260 + random.randint(0,8) and x > centro_x ):
+      return color(192, 138, 113)
+    #Linea que va en la parte superior del lunar 
+    if(y>=250 + random.randint(0,10) and y<260 + random.randint(0,8) and x > centro_x ):
+      return color(207, 94, 41)
+    #Linea que va en la parte superior del lunar 
+    if(y>=240 + random.randint(0,10) and y<250 + random.randint(0,8)and x > centro_x):
+      return color(121, 21, 21)
+    if(y>=240 + random.randint(0,50) and y<250 + random.randint(0,50)and x < centro_x):
+      return color(121, 21, 21)
+    #Linea que va en la parte inferior del lunar 
+    if(y>=230 + random.randint(0,10) and y<250 + random.randint(0,20)):
+      return color(253, 244, 239)
+    
+    #Fuera lunar 
+    
+    #Tercera linea abajo para arriba
+    if(y>=200 + random.randint(0,20) and y<220 + random.randint(0,20)):
+      return color(245, 237, 222)
+    #Segunda linea de abajo para arriba
+    if(y>=180 + random.randint(0,20) and y<230 + random.randint(0,20)):
+       return color(229, 212, 184)
+    #Color de abajo
+    if(y>0 + random.randint(0,20) and y<200 + random.randint(0,20)):
+      return color(171, 155, 57)
+      
+    #color base 
+    if(y>=0 + random.randint(0,5) and y<=375 + random.randint(0,5)):
+      return color(234, 190, 122)
+
+  def triangle(self, A, B, C, color=None):
+    bbox_min, bbox_max = bbox(A, B, C)
+
+    for x in range(bbox_min.x, bbox_max.x + 1):
+      for y in range(bbox_min.y, bbox_max.y + 1):
+        w, v, u = barycentric(A, B, C, V2(x, y))
+        if w < 0 or v < 0 or u < 0: 
+          continue
+        
+        color = self.shader(A,B,C,x,y)
+
+        z = A.z * w + B.z * v + C.z * u
+
+        if x < 0 or y < 0:
+          continue
+
+        if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
+          self.point(x, y, color)
+          self.zbuffer[x][y] = z
+
+  def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
+    return V3(
+      round((vertex[0] + translate[0]) * scale[0]),
+      round((vertex[1] + translate[1]) * scale[1]),
+      round((vertex[2] + translate[2]) * scale[2])
+    )
+    
+  def load(self, filename, translate=(0, 0, 0), scale=(1, 1, 1)):
+    model = Obj(filename)
+    light = V3(0,0,1)
+
+    for face in model.vfaces:
+        vcount = len(face)
+
+        if vcount == 3:
+          f1 = face[0][0] - 1
+          f2 = face[1][0] - 1
+          f3 = face[2][0] - 1
+
+          a = self.transform(model.vertices[f1], translate, scale)
+          b = self.transform(model.vertices[f2], translate, scale)
+          c = self.transform(model.vertices[f3], translate, scale)
+
+          normal = norm(cross(sub(b, a), sub(c, a)))
+          intensity = dot(normal, light)
+
+          grey = round(255 * intensity)
+          if grey < 0:
+            continue
+          self.triangle(a, b, c, color=color(grey, grey, grey))
+          
+        else:
+          f1 = face[0][0] - 1
+          f2 = face[1][0] - 1
+          f3 = face[2][0] - 1
+          f4 = face[3][0] - 1   
+
+          vertices = [
+            self.transform(model.vertices[f1], translate, scale),
+            self.transform(model.vertices[f2], translate, scale),
+            self.transform(model.vertices[f3], translate, scale),
+            self.transform(model.vertices[f4], translate, scale)
+          ]
+
+          normal = norm(cross(sub(vertices[0], vertices[1]), sub(vertices[1], vertices[2])))  
+          intensity = dot(normal, light)
+          grey = round(255 * intensity)
+
+          A, B, C, D = vertices 
+
+          grey = round(255 * intensity)
+          if grey < 0:
+            continue
+          self.triangle(A, B, C, color(grey, grey, grey))
+          self.triangle(A, C, D, color(grey, grey, grey))            
+            
+
+r = Render(500, 500)
+r.load('./sphere.obj', translate=(1, 1, 1), scale=(300, 300, 300))
+
+r.display('Jupiter.bmp')
