@@ -217,8 +217,8 @@ class Render(object):
                   
                   if (x<0) or (y<0):
                     continue
-                  if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
-                    self.zbuffer[x][y] = z 
+                  if x < len(self.zBuffer) and y < len(self.zBuffer[x]) and z > self.zBuffer[x][y]:
+                    self.zBuffer[x][y] = z 
                     self.glPoint(x, y, colort)
                     
     def lightPosition(self, x:int, y:int, z:int):
