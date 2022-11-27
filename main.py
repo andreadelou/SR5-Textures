@@ -157,7 +157,7 @@ class Render(object):
                 self.glPoint(x, y, color)
 
 
-  def transform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
+  def transform_vertex(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
     return V3(
       round((vertex[0] + translate[0]) * scale[0]),
       round((vertex[1] + translate[1]) * scale[1]),
@@ -167,7 +167,7 @@ class Render(object):
   def load(self, filename, translate, scale, texture = None):
     model = Obj(filename)
 
-    for face in model.faces:
+    for face in model.vfaces:
         vcount = len(face)
         
         if vcount == 4:
@@ -223,6 +223,10 @@ class Render(object):
             
 
 r = Render(500, 500)
-r.load('./sphere.obj', translate=(1, 1, 1), scale=(300, 300, 300))
 
-r.display('Jupiter.bmp')
+
+textura = Texture('./earth.bmp')
+
+r.load('./earth.obj', translate=[512, 512, 0], scale=[1, 1, 1], texture=textura)
+
+r.display('SR5.bmp')
