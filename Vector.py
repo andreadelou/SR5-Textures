@@ -1,3 +1,41 @@
+from collections import namedtuple
+
+#------------------V2-----------------
+
+V2 = namedtuple('Point2', ['x', 'y'])
+
+def cross(v1, v2):
+      return (
+        v1.y * v2.z - v1.z * v2.y,
+        v1.z * v2.x - v1.x * v2.z,
+        v1.x * v2.y - v1.y * v2.x
+      )
+      
+def bbox(*vertices):
+  xs = [ vertex.x for vertex in vertices ]
+  ys = [ vertex.y for vertex in vertices ]
+  xs.sort()
+  ys.sort()
+
+  return V2(xs[0], ys[0]), V2(xs[-1], ys[-1])
+
+def barycentric(A, B, C, P):
+
+  bary = cross(
+    V3(C.x - A.x, B.x - A.x, A.x - P.x), 
+    V3(C.y - A.y, B.y - A.y, A.y - P.y)
+  )
+
+  if abs(bary[2]) < 1:
+    return -1, -1, -1   # this triangle is degenerate, return anything outside
+
+  return (
+    1 - (bary[0] + bary[1]) / bary[2], 
+    bary[1] / bary[2], 
+    bary[0] / bary[2]
+  )
+
+#---------------------V3---------------------
 class V3(object):
     # creacion del vector en 3D
     def __init__(self, x, y, z=0):
