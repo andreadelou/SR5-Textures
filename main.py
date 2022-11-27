@@ -129,8 +129,8 @@ class Render(object):
               v4 = self.transform_vertex(model.vertex[f4], translate_factor, scale_factor)
 
               if not texture:
-                  self.triangle_babycenter(v1, v2, v3)
-                  self.triangle_babycenter(v1, v3, v4)
+                  self.triangle_babycenter(v1, v2, v3,colort = color(255,255,255))
+                  self.triangle_babycenter(v1, v3, v4,colort = color(255,255,255))
               else:
                   t1 = face[0][1] - 1
                   t2 = face[1][1] - 1
@@ -142,8 +142,8 @@ class Render(object):
                   tC = V3(*model.tvertex[t3])
                   tD = V3(*model.tvertex[t4])
 
-                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture)
-                  self.triangle_babycenter(v1, v3, v4, (tA, tC, tD), texture)
+                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
+                  self.triangle_babycenter(v1, v3, v4, (tA, tC, tD), texture=texture)
 
           
           elif vcount == 3:
@@ -156,7 +156,7 @@ class Render(object):
               v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
 
               if not texture:
-                  self.triangle_babycenter(v1, v2, v3)
+                  self.triangle_babycenter(v1, v2, v3, colort = color(255,255,255))
               else:
                   t1 = face[0][1] - 1
                   t2 = face[1][1] - 1
@@ -166,7 +166,7 @@ class Render(object):
                   tB = V3(*model.tvertex[t2])
                   tC = V3(*model.tvertex[t3])
 
-                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture)
+                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture=texture)
 
             
     
