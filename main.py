@@ -108,7 +108,8 @@ class Render(object):
 
     def glPoint(self, x, y, colort = None):
         if (0 <= x < self.width) and (0 <= y < self.height):
-          self.framebuffer[x][y] = colort or self.current_color
+          self.framebuffer[x][y] = colort 
+          # or self.current_color
             
     def glObjModel(self, filename, scale_factor, translate_factor, texture=None):
       model = Obj(filename)
@@ -259,10 +260,10 @@ class Render(object):
 r = Render()
 r.glCreateWindow(1024, 1024)
 # r.glViewport(int(0),int(0),int(800/1), int(800/1))
-r.lightPosition(0.3, 0.2, 1)
+r.lightPosition(0, 0, 1)
 textura = Texture('./earth.bmp')
-
+print("textura")
 #                          escala            posicion y , x
-r.glObjModel('./earth.obj', translate_factor=[512, 512, 0], scale_factor=[1, 1, 1], texture=textura)
-
+r.glObjModel('./earth.obj', translate_factor=[512, 512, 0], scale_factor=[0.1, 0.1, 0.1], texture=textura)
+print("objeto")
 r.glFinish("obj.bmp")
