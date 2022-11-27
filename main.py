@@ -109,108 +109,64 @@ class Render(object):
     def glPoint(self, x, y, colort = None):
         if (0 <= x < self.width) and (0 <= y < self.height):
           self.framebuffer[x][y] = colort or self.current_color
-
-    # def glLine(self, v1, v2):
-        
-    #     x0 = int((v1.x + 1) * self.viewpwidth * 1/2 ) + self.viewpx
-    #     y0 = int((v1.y + 1) * self.viewpheight * 1/2) + self.viewpy
-
-    #     x1 = int((v2.x + 1) * self.viewpwidth * 1/2 ) + self.viewpx
-    #     y1 = int((v2.y + 1) * self.viewpheight * 1/2) + self.viewpy
-
-    #     #realizar conversion
-    #     dy = abs(y1 - y0)
-    #     dx = abs(x1 - x0)
-
-    #     steep = dy > dx
-
-    #     if steep:
-    #         x0, y0 = y0, x0
-    #         x1, y1 = y1, x1
-
-    #     if  x0 > x1:
-    #         x0, x1 = x1, x0
-    #         y0, y1 = y1, y0
-
-    #     dy = abs(y1 - y0)
-    #     dx = abs(x1 - x0)
-
-    #     offset = 0
-        
-    #     threshold = dx
-        
-    #     y = y0
-
-    #     for x in range(x0, x1 + 1):
-    #         if steep:
-    #             self.glPoint(y, x)
-    #         else:
-    #             self.glPoint(x, y)
-
-    #         offset += dy * 2
-    #         if offset >= threshold:
-    #             y += 1 if y0 < y1 else -1
-    #             threshold += dx * 2
             
     def glObjModel(self, filename, scale_factor, translate_factor, texture=None):
       model = Obj(filename)
-      
+
       for face in model.faces:
-  
-        if len(face) == 4:
-          f1 = face[0][0] - 1
-          f2 = face[1][0] - 1
-          f3 = face[2][0] - 1
-          f4 = face[3][0] - 1
-
-          v1 = self.transform_vertex(model.vertex[f1], scale_factor, translate_factor)
-          v2 = self.transform_vertex(model.vertex[f2], scale_factor, translate_factor)
-          v3 = self.transform_vertex(model.vertex[f3], scale_factor, translate_factor)
-          v4 = self.transform_vertex(model.vertex[f4], scale_factor, translate_factor)
+          vcount = len(face)
           
-          if not texture:
-            self.triangle_babycenter(v1,v2,v3, colort=color(0,0,0))
-            self.triangle_babycenter(v1,v2,v3, colort=color(0,0,0))
+          if vcount == 4:
+              f1 = face[0][0] - 1
+              f2 = face[1][0] - 1
+              f3 = face[2][0] - 1
+              f4 = face[3][0] - 1
+
+              v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
+              v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
+              v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
+              v4 = self.transform_vertex(model.vertex[f4], translate_factor, scale_factor)
+
+              if not texture:
+                  self.triangle_babycenter(v1, v2, v3)
+                  self.triangle_babycenter(v1, v3, v4)
+              else:
+                  t1 = face[0][1] - 1
+                  t2 = face[1][1] - 1
+                  t3 = face[2][1] - 1
+                  t4 = face[3][1] - 1
+
+                  tA = V3(*model.tvertex[t1])
+                  tB = V3(*model.tvertex[t2])
+                  tC = V3(*model.tvertex[t3])
+                  tD = V3(*model.tvertex[t4])
+
+                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture)
+                  self.triangle_babycenter(v1, v3, v4, (tA, tC, tD), texture)
+
           
-          else:
+          elif vcount == 3:
+              f1 = face[0][0] - 1
+              f2 = face[1][0] - 1
+              f3 = face[2][0] - 1
 
-            ft1 = face[0][1] - 1
-            ft2 = face[1][1] - 1
-            ft3 = face[2][1] - 1
-            ft4 = face[3][1] - 1
+              v1 = self.transform_vertex(model.vertex[f1], translate_factor, scale_factor)
+              v2 = self.transform_vertex(model.vertex[f2], translate_factor, scale_factor)
+              v3 = self.transform_vertex(model.vertex[f3], translate_factor, scale_factor)
 
-            vt1 = V3(*model.tvertex[ft1],0)
-            vt2 = V3(*model.tvertex[ft2],0)
-            vt3 = V3(*model.tvertex[ft3],0)
-            vt4 = V3(*model.tvertex[ft4],0)
+              if not texture:
+                  self.triangle_babycenter(v1, v2, v3)
+              else:
+                  t1 = face[0][1] - 1
+                  t2 = face[1][1] - 1
+                  t3 = face[2][1] - 1
 
-            self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3), texture=texture)
-            self.triangle_babycenter((v1, v3, v4), (vt1, vt3, vt4), texture=texture)
-          
-        
-        if len(face) == 3:
-          f1 = face[0][0] - 1
-          f2 = face[1][0] - 1
-          f3 = face[2][0] - 1
+                  tA = V3(*model.tvertex[t1])
+                  tB = V3(*model.tvertex[t2])
+                  tC = V3(*model.tvertex[t3])
 
-          v1 = self.transform_vertex(model.vertex[f1], scale_factor, translate_factor)
-          v2 = self.transform_vertex(model.vertex[f2], scale_factor, translate_factor)
-          v3 = self.transform_vertex(model.vertex[f3], scale_factor, translate_factor)
+                  self.triangle_babycenter(v1, v2, v3, (tA, tB, tC), texture)
 
-          if not texture:
-            self.triangle_babycenter(v1,v2,v3, colort=color(0,0,0))
-            
-          else:
-
-            ft1 = face[0][1] - 1
-            ft2 = face[1][1] - 1
-            ft3 = face[2][1] - 1
-            
-            vt1 = V3(*model.tvertex[ft1])
-            vt2 = V3(*model.tvertex[ft2])
-            vt3 = V3(*model.tvertex[ft3])
-
-            self.triangle_babycenter((v1, v2, v3), (vt1, vt2, vt3), texture=texture)
             
     
     def transform_vertex(self, vertex, scale_factor, translate_factor):
@@ -222,15 +178,14 @@ class Render(object):
         
     # SR4               
     
-    def triangle_babycenter(self, vertices, tvertices=(), texture=None, intensity=1, colort=None):
-        
-        A, B, C = vertices
+    def triangle_babycenter(self, A, B, C, tvertex=(), texture=None, intensity=1, colort=None):
+    
         min,max = bounding_box(A, B, C)
         min.round_coords()
         max.round_coords()
         
         # if self.texture:
-        #     tA, tB, tC = tvertices
+        #     tA, tB, tC = tvertex
         
         Light = self.light
         Normal = (B - A) * (C - A)
@@ -252,11 +207,11 @@ class Render(object):
                 if (w < 0 or v < 0 or u < 0):
                     continue
                 if texture: 
-                  tA, tB, tC = tvertices
+                  tA, tB, tC = tvertex
                   tx = tA.x * w + tB.x * u + tC.x * v
                   ty = tA.y * w + tB.y * u + tC.y * v
                   
-                  colort = self.texture.get_color_with_intensity(tx, ty, i)
+                  colort = texture.get_color_with_intensity(tx, ty, i)
                   
                   z = A.z * w + B.z * v + C.z * u
                   
@@ -302,12 +257,12 @@ class Render(object):
 
   
 r = Render()
-r.glCreateWindow(1000, 1000)
+r.glCreateWindow(1024, 1024)
 # r.glViewport(int(0),int(0),int(800/1), int(800/1))
 r.lightPosition(0.3, 0.2, 1)
-textura = Texture('./model.bmp')
+textura = Texture('./earth.bmp')
 
 #                          escala            posicion y , x
-r.glObjModel('face.obj', (10, 10, 10), (400, 200, 0), texture=textura)
-# r.glObjModel('arbol.obj', (20, 20, 20), (400, 100, 0))
+r.glObjModel('./earth.obj', translate_factor=[512, 512, 0], scale_factor=[1, 1, 1], texture=textura)
+
 r.glFinish("obj.bmp")
