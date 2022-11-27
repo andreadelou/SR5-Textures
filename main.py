@@ -117,7 +117,7 @@ class Render(object):
   
   
   def triangle(self, A, B, C, cord_tex = None, texture = None, color = None, intensity = 1):
-
+    
     light = V3(0, 0, 1)
     normal = (B - A) * (C - A)
 
