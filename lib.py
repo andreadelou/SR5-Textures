@@ -1,5 +1,5 @@
 import struct
-from Obj import Obj
+from obj import *
 from Vector import V3
 
 def char(c):

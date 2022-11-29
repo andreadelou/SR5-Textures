@@ -1,6 +1,6 @@
 import struct
 
-def color_select(r, g, b):
+def colort(r, g, b):
    return bytes([b, g, r])
 
 class Obj(object):
@@ -55,7 +55,7 @@ class Texture(object):
                     r = ord(image.read(1))
                     
                     self.pixels[y].append(
-                        color_select(r, g, b)
+                        colort(r, g, b)
                     )
                     
     def get_color(self, tx, ty):
