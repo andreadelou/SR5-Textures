@@ -12,16 +12,22 @@ def dword(dw):
     dw = struct.pack('=l', dw)   
     return dw  
 
-# def color_select(r, g, b):
-#     return bytes([int(b * 255), int(g * 255), int(r * 255)])
-def colorrgb(r, g, b):
+def color_select(r, g, b):
+    r = int(min(255, max(r, 0)))
+    g = int(min(255, max(g, 0)))
+    b = int(min(255, max(b, 0)))
     return bytes([b, g, r])
 
-def color_select(r, g, b):
-  return colorrgb(clamping(r*255), clamping(g*255), clamping(b*255))
+# def color_select(r, g, b):
+#     return bytes([int(b * 255), int(g * 255), int(r * 255)])
+# def colorrgb(r, g, b):
+#     return bytes([b, g, r])
+
+# def color_select(r, g, b):
+#   return colorrgb(round(r*255), round(g*255), round(b*255))
   
-def clamping(num):
-  return int(max(min(num, 255), 0))
+# def clamping(num):
+#   return int(max(min(num, 255), 0))
 
 def cross(v1, v2):
     return (
@@ -68,8 +74,8 @@ class Render(object):
         self.width = 0
         self.height = 0
         self.pixels = 0
-        self.colort = color_select(255, 255, 255)
-        self.background = color_select(0, 0, 0)
+        self.colort = color_select(128,128,128)
+        self.background = color_select(128,128,128)
         self.viewport_x = 0 
         self.viewport_y = 0
         self.viewport_height = 0
@@ -105,10 +111,10 @@ class Render(object):
     
     def load(self, filename, translate, scale, texture = None):
         model = Obj(filename)
-
+        # i=0 
         for face in model.faces:
             vcount = len(face)
-            
+            # i+=1
             if vcount == 4:
                 f1 = face[0][0] - 1
                 f2 = face[1][0] - 1
@@ -120,6 +126,7 @@ class Render(object):
                 v3 = self.transform_vertex(model.vertex[f3], translate, scale)
                 v4 = self.transform_vertex(model.vertex[f4], translate, scale)
 
+                
                 if not texture:
                     self.triangle_babycenter(v1, v2, v3)
                     self.triangle_babycenter(v1, v3, v4)
@@ -146,7 +153,12 @@ class Render(object):
                 v1 = self.transform_vertex(model.vertex[f1], translate, scale)
                 v2 = self.transform_vertex(model.vertex[f2], translate, scale)
                 v3 = self.transform_vertex(model.vertex[f3], translate, scale)
-
+                
+                # if v1.z < 0:
+                #     print(v1)
+                #     print(v2)
+                #     print(v3)
+                    
                 if not texture:
                     self.triangle_babycenter(v1, v2, v3)
                 else:
@@ -239,6 +251,6 @@ class Render(object):
             # Color table
             for y in range(self.height):
                 for x in range(self.width):
-                    file.write(self.framebuffer[y][x])
+                    file.write(self.framebuffer[x][y])
             file.close()
             
